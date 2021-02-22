@@ -62,66 +62,90 @@
 
 [![Product Name Screen Shot][product-screenshot]](https://example.com)
 
-There are many great README templates available on GitHub, however, I didn't find one that really suit my needs so I created this enhanced one. I want to create a README template so amazing that it'll be the last one you ever need -- I think this is it.
+I conducted a comprehensive security assessment of the VulnApp.exe application on the Windows 7 Lab VM to determine its existing vulnerabilities by engaging in a penetration test that was conducted on the 14th of February 2021. The goal of the “pentest” is to act as a malicious actor by performing attacks against the application with the aim of discovering any vulnerabilities that could lead to a breach, and be leveraged to gain access to the system through the application.
 
-Here's why:
-* Your time should be focused on creating something amazing. A project that solves a problem and helps others
-* You shouldn't be doing the same tasks over and over like creating a README from scratch
-* You should element DRY principles to the rest of your life :smile:
+This assessment harnessed testing based on the NIST SP 800-115 Technical Guide to Information Security Testing and Assessment and the OWASP Testing Guide (v4) to provide documentation and proof of developing a working exploit. 
 
-Of course, no one template will serve all projects since your needs may be different. So I'll be adding more in the near future. You may also suggest changes by forking this repo and creating a pull request or opening an issue. Thanks to all the people have have contributed to expanding this template!
+PHASES OF PENETRATION TEST
+Phases of penetration testing activities include the following:
+•	Planning – Goals are gathered, and rules of engagement obtained.
+•	Discovery – Perform scanning and enumeration to identify potential vulnerabilities, weak areas, and exploits.
+•	Attack – Confirm potential vulnerabilities through exploitation and perform additional discovery upon new access.
+•	Reporting – Document all found vulnerabilities and exploits, failed attempts, and recommendations.
 
-A list of commonly used resources that I find helpful are listed in the acknowledgements.
+FINDINGS OVERVIEW 
+While conducting the penetration test, there was one critical vulnerability discovered in the system. Adelaja was able to gain root access and connect to the windows machine as an administrator. This was possible due to a vulnerable program being executed as an administrator, which led to remote system access. 
+
+A brief technical overview is listed below: 
+Target: VulnApp.exe – Low-privilege shell was obtained by performing a Buffer-Overflow attack against the application found open on port 9999 granting Adelaja  full root/administrative privileges.
 
 ### Built With
 
-This section should list any major frameworks that you built your project using. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
-* [Bootstrap](https://getbootstrap.com)
-* [JQuery](https://jquery.com)
-* [Laravel](https://laravel.com)
+These are the prereqisites 
+* [Kali Linux](https://www.kali.org/downloads/)
+* [VunApp.exe]
+* [Trial Windows 10 Enterprise Edition](https://www.microsoft.com/en-gb/evalcenter/evaluate-windows-10-enterprise)
+* [mona.py]
+* [Immunity Debugger](https://www.immunityinc.com/products/debugger/)
 
 
 
 <!-- GETTING STARTED -->
-## Getting Started
+## EXPLOITATION
+During the exploitation phase, Adelaja will attempt to exploit a buffer Overflow attack within the windows 7 operating system using the following steps:
+1.	Fuzzing to check vulnerability
+2.	Generating A Pattern To find The Offset
+3.	Overwriting and Controlling the EIP
+4.	Identify Bad Characters
+5.	Identifying The Right Module
+6.	Generating The Shell Code
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
-
-### Prerequisites
-
-This is an example of how to list things you need to use the software and how to install them.
-* npm
-  ```sh
-  npm install npm@latest -g
-  ```
-
-### Installation
-
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
-   ```sh
-   git clone https://github.com/your_username_/Project-Name.git
-   ```
-3. Install NPM packages
-   ```sh
-   npm install
-   ```
-4. Enter your API in `config.js`
-   ```JS
-   const API_KEY = 'ENTER YOUR API';
-   ```
-
+The end goal for the tester is to attempt to penetrate the target system gaining as much access privilege as possible. Adelaja will stay within the scope that was determined during pre-engagement.
 
 
 <!-- USAGE EXAMPLES -->
-## Usage
-
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
-
-_For more examples, please refer to the [Documentation](https://example.com)_
+## Fuzzing To Check Vulnerability
+Before proceeding to develop the exploit. The application is checked to find any vulnerable injection points unable to handle large amounts of data causing the application to crash. The TRUN command on Vulnapp.exe is known to be vulnerable and the python script below was developed to attack this specific command [Figure 1.1].
 
 
+In the above code, a socket to enable the connection is created and passed the IP address of the target host (192.168.56.107) and the identified port (9999) Then  the buffer variable assigned 100 A characters is binded to the vulnerable ‘TRUN’ command and sent to the target machine. It will send A (\x41 in hex) incrementally at 100 bytes a time until it’s no longer able to communicate with the port. After a successful crash, a message will be displayed highlighting when crashed occurred in bytes.
+Note that the additional characters ‘/.:/’ are commands that go after TRUN and must be included to gain access to this injection point.
+Before running the fuzzScript, the VulnApp.exe is attached to immunity debugger [Figure 1.2] [Figure1.3].
+
+
+
+
+
+Running the script [Figure 1.4] now will confirm that the A character values declared in the script are creating an access violation and getting passed to the EBP register [Figure 1.5]. In this case, it didn’t overwrite the EIP but it stops communicating with the port at 2100 bytes establishing that the application crashed.
+
+
+
+
+
+## Generating A Pattern To Find The Offset
+Using the pattern_create ruby file provided by Metasploit, a unique string of no repeating characters will be generated [Figure 2.1] and sent to the application’s buffer using the second python script[Figure 2.2]. This payload will display a value on the EIP when the program crashes [Figure 2.3]. This value can then be used to find the offset The offset is the exact number of bytes it takes to fill the application’s buffer.
+
+
+
+
+
+
+
+
+
+
+
+
+
+For this application, the EIP value in the debugger is 386F4337. Using a second ruby script from Metasploit called pattern_offset.rb on this EIP value will search for a pattern (within the generated 2500 characters from the pattern_create script [Figure 2.1]) that matches the EIP value 386F4337, showing us the exact point the EIP register begins. 
+
+In this case it found an offset of 2003 bytes [Figure 2.4]. This is critical as Adelaja now knows there are 2003 bytes right before the EIP, with the EIP itself being 4 bytes long. With this knowledge, those 4 specific bytes can now be overridden to gain control of the EIP.
+
+
+
+
+
+## Overwriting and Controlling the EIP
 
 <!-- ROADMAP -->
 ## Roadmap
