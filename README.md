@@ -56,9 +56,6 @@
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
-
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
-
 I conducted a comprehensive security assessment of the VulnApp.exe application on the Windows 7 Lab VM to determine its existing vulnerabilities by engaging in a penetration test that was conducted on the 14th of February 2021. The goal of the “pentest” is to act as a malicious actor by performing attacks against the application with the aim of discovering any vulnerabilities that could lead to a breach, and be leveraged to gain access to the system through the application.
 
 This assessment harnessed testing based on the NIST SP 800-115 Technical Guide to Information Security Testing and Assessment and the OWASP Testing Guide (v4) to provide documentation and proof of developing a working exploit. 
