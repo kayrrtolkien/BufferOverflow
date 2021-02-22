@@ -25,7 +25,7 @@
 <br />
 <p align="center">
   <a href="https://github.com/kayrrtolkien/BufferOverflow/edit/master/README.md">
-    <img src="images/2021-02-22 20_33_43-Adelaja_Akolade_Buffer_Overflow_Report.docx - Word.png" alt="Logo" width="80" height="80">
+    <img src="images/2021-02-22 20_33_43-Adelaja_Akolade_Buffer_Overflow_Report.docx - Word.png" alt="Logo" width="180" height="180">
   </a>
 
   <h3 align="center">Buffer OverFlow</h3>
