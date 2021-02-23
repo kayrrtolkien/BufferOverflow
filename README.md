@@ -60,6 +60,8 @@ I conducted a comprehensive security assessment of the VulnApp.exe application o
 
 This assessment harnessed testing based on the NIST SP 800-115 Technical Guide to Information Security Testing and Assessment and the OWASP Testing Guide (v4) to provide documentation and proof of developing a working exploit. 
 
+Special Thanks to othneildrew for the Amazing README Template i used here.
+
 PHASES OF PENETRATION TEST
 Phases of penetration testing activities include the following:
 •	Planning – Goals are gathered, and rules of engagement obtained.
